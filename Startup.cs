@@ -8,8 +8,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using SecurityDemo2.Models;
 
-namespace Assignment
+namespace SecurityDemo2
 {
     public class Startup
     {
@@ -24,6 +27,34 @@ namespace Assignment
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllersWithViews();
+
+            services.AddDbContext<MyIdentityDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+
+
+            //Add Identity Service with Default password settings
+            //minimum 6char,uppercase,digit
+            // services.AddIdentity<MyIdentityUser, MyIdentityRolecs>().AddEntityFrameworkStores<MyIdentityDbContext>().AddDefaultTokenProviders();
+
+            services.AddIdentity<MyIdentityUser, MyIdentityRolecs>(options =>
+             {
+                //password settings
+                options.SignIn.RequireConfirmedEmail = false;
+                 options.User.RequireUniqueEmail = false;
+                 options.Password.RequireDigit = true;
+                 options.Password.RequiredLength = 3;
+                 options.Password.RequiredUniqueChars = 0;
+                 options.Password.RequireLowercase = true;
+                 options.Password.RequireNonAlphanumeric = false;
+                 options.Password.RequireUppercase = false;
+
+                //lockout settings
+                options.Lockout.MaxFailedAccessAttempts = 3;
+                 options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(1);//default 5 min
+
+                //user settings
+                options.User.RequireUniqueEmail = false;
+             }
+            ).AddEntityFrameworkStores<MyIdentityDbContext>().AddDefaultTokenProviders();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -43,8 +74,9 @@ namespace Assignment
             app.UseStaticFiles();
 
             app.UseRouting();
-
+            app.UseAuthentication();
             app.UseAuthorization();
+            
 
             app.UseEndpoints(endpoints =>
             {
